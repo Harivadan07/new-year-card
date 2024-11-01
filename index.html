@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy New Year Card</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            text-align: center;
+        }
+
+        #newYearImage {
+            width: 80vw;
+            max-width: 500px;
+            transition: opacity 0.5s ease;
+            animation: fadeIn 1s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .click-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .click-button:hover {
+            background-color: #ff5722;
+        }
+
+        .message {
+            display: none;
+            position: absolute;
+            font-size: 2rem;
+            color: black;
+            z-index: 1;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('background.png') center center/cover;
+            opacity: 0;
+            transition: opacity 1s;
+            z-index: -1;
+        }
+
+        .background.visible {
+            opacity: 1;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Prevent interaction with the canvas */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img id="newYearImage" src="3d-new-year-image.jpg" alt="Happy New Year Image">
+    <button class="click-button" onclick="revealMessage()">Let's Celebrate</button>
+    
+    <div id="background" class="background"></div>
+    
+    <audio id="backgroundMusic" src="new-year-song.mp3" preload="auto"></audio>
+
+    <div id="message" class="message">
+        🎉 Wishing you a joyful New Year filled with prosperity, happiness, and success! 🎉
+    </div>
+
+    <canvas id="fireworkCanvas"></canvas>
+</div>
+
+<script>
+    let musicPlaying = false;
+    const canvas = document.getElementById('fireworkCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    // Function to play music
+    function playMusic() {
+        const audio = document.getElementById('backgroundMusic');
+        audio.play().then(() => {
+            musicPlaying = true; // Music is playing
+        }).catch(error => {
+            console.log("Autoplay failed: ", error);
+        });
+    }
+
+    // Call to play music on page load
+    window.onload = function() {
+        playMusic(); // Try to play music
+    };
+
+    function revealMessage() {
+        // Stop all fireworks
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+
+        // Hide the 3D image and buttons
+        document.getElementById('newYearImage').style.opacity = '0';
+        document.querySelector('.click-button').style.display = 'none';
+
+        setTimeout(() => {
+            document.getElementById('newYearImage').style.display = 'none';
+        }, 500); // Match this duration with the CSS transition
+
+        // Show the background and message
+        document.getElementById('background').classList.add('visible');
+        document.getElementById('message').style.display = 'block';
+
+        // Play music if not already playing
+        if (!musicPlaying) {
+            playMusic();
+        }
+    }
+
+    function createFirework(x, y) {
+        const colors = ['#FF4D4D', '#FFCC00', '#4DFF4D', '#FF4DFF', '#4D4DFF'];
+
+        const particles = 100; // Number of particles
+        for (let i = 0; i < particles; i++) {
+            const angle = Math.random() * 2 * Math.PI; // Random angle
+            const speed = Math.random() * 3 + 1; // Random speed
+            const radius = Math.random() * 3 + 1; // Random particle size
+
+            const particle = {
+                x: x,
+                y: y,
+                dx: Math.cos(angle) * speed, // x velocity
+                dy: Math.sin(angle) * speed, // y velocity
+                radius: radius,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: 0, // Lifespan
+                maxLife: 60 // Duration before particle fades away
+            };
+
+            animateFirework(particle);
+        }
+    }
+
+    function animateFirework(particle) {
+        function draw() {
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+            ctx.fillStyle = particle.color;
+            ctx.fill();
+            ctx.closePath();
+
+            // Update particle position and life
+            particle.x += particle.dx;
+            particle.y += particle.dy;
+            particle.life++;
+
+            // Check if the particle is still alive
+            if (particle.life < particle.maxLife) {
+                // Fade out effect by reducing opacity
+                ctx.globalAlpha = 1 - (particle.life / particle.maxLife); // Fading effect
+                requestAnimationFrame(draw);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas after fading
+                ctx.globalAlpha = 1; // Reset alpha for next particle
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+
+    // Event listener for clicks to create fireworks
+    document.querySelector('.container').addEventListener('click', (event) => {
+        createFirework(event.clientX, event.clientY);
+    });
+</script>
+</body>
+</html>
